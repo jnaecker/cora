@@ -4,12 +4,16 @@ library(ggplot2)
 library(lubridate)
 library(ggalt)
 library(hrbrthemes)
+library(stringr)
+library(purrr)
 
-cora <-
-  gs_title("243c201f9125 input received") %>%
-  gs_read() 
-
-names(cora) <- c("Time", "Device", "Level", "Test")
+cora <- gs_ls() %>%
+  filter(str_detect(sheet_title, "243c201f9125 input received")) %>%
+  collect() %>% 
+  .[["sheet_title"]] %>%
+  map(gs_title) %>%
+  map(~gs_read(., col_names = c("Time", "Device", "Level", "Test"))) %>%
+  reduce(rbind)
 
 cora$Date <- as.Date(cora$Time, format = "%B %d, %Y at %I:%M%p")
 cora$DateTime <- as.POSIXct(strptime(cora$Time, format = "%B %d, %Y at %I:%M%p"))
